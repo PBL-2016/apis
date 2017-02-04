@@ -1,39 +1,41 @@
 # -*- coding: utf-8 -*-
 
-import falcon
+from flask import (Flask, request)
+from flask_uploads import (UploadSet, configure_uploads, IMAGES, UploadNotAllowed)
 import json
 import os
 import datetime
-from falcon_multipart.middleware import MultipartMiddleware
 
-class RecommendForMen(object):
+app = Flask(__name__)
 
-    def dump_response(self, cluster, skin_color, hair_color, ratio, contour,
-                      colors, clothes):
-        return json.dumps({'cluster': cluster,
-                           'skin_color': skin_color,
-                           'hair_color': hair_color,
-                           'ratio': ratio,
-                           'contour': contour,
-                           'colors': colors,
-                           'clothes': clothes})
+uploaded_images = UploadSet('images', default_dest=lambda app: app.instance_path)
+configure_uploads(app, uploaded_images)
 
-    def on_post(self, req, res):
-        print(req.files)
-        image = req.get_param('image')
-        print(image)
-        _, ext = os.path.splitext(image.filename)
-        data = image.file.read()
-        with open(datetime.now().strftime('%Y%m%d%H%M%S')+'.'+ext, 'wb') as f:
-            f.write(data)
+def dump_response(cluster, skin_color, hair_color, ratio, contour,
+                  colors, clothes):
+    return json.dumps({'cluster': cluster,
+                       'skin_color': skin_color,
+                       'hair_color': hair_color,
+                       'ratio': ratio,
+                       'contour': contour,
+                       'colors': colors,
+                       'clothes': clothes})
 
-        res.body = self.dump_response(0, '#ffffff', '#ffffff', 2.0, 0, {}, {})
-
-app = falcon.API(middleware=[MultipartMiddleware()])
-recomen = RecommendForMen()
-app.add_route('/reco/men', recomen)
+@app.route('/reco/men', methods=['POST'])
+def reco_men():
+    if request.method == 'POST':
+        image = request.files.get('image');
+        if not image:
+            return "Please upload image"
+        else:
+            try:
+                filename = uploaded_images.save(image)
+            except UploadNotAllowed:
+                return "Upload was not allowed"
+            else:
+                print(filename)
+                return dump_response(0, '#ffffff', '#ffffff', 2.0, 0, {}, {})
+    return "Hoge"
 
 if __name__ == '__main__':
-    from wsgiref import simple_server
-    httpd = simple_server.make_server('0.0.0.0', 8000, app)
-    httpd.serve_forever()
+    app.run(debug=True)

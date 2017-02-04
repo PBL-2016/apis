@@ -3,7 +3,13 @@
 ## Dependencies
 
 ```bash
-$ pip install falcon
+$ pip install flask flask-uploads
+```
+
+## Run
+
+```bash
+$ python3 server.py
 ```
 
 ## 画像を解析(男性)
