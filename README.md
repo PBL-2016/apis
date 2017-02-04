@@ -1,5 +1,11 @@
 # Fashion Recommend Engine's API Server
 
+## Dependencies
+
+```bash
+$ pip install falcon
+```
+
 ## 画像を解析(男性)
 
 ```
