@@ -109,14 +109,14 @@ def analysis(path):
     # Contour Section
     if C.check_loaded():
         contour = recognize_contour(img[face.y:face.y2, face.x:face.x2])
-        if contour == b'circle':
+        if contour == "b'circle'":
             contour = 0
-        elif contour == b'square':
+        elif contour == "b'square'":
             contour = 1
-        elif contour == b'triangle':
+        elif contour == "b'triangle'":
             contour = 2
     else:
-        contour = 2
+        contour = 1
 #    print('Contour:\t', contour)
 
     # Prediction
