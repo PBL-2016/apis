@@ -2,6 +2,7 @@
 
 from flask import (Flask, request)
 from flask_uploads import (UploadSet, configure_uploads, IMAGES, UploadNotAllowed)
+from predict import (prediction_init, analysis, P_SUCCESS, P_NOTFOUND, P_UNDETECTED)
 import json
 import os
 import datetime
@@ -30,12 +31,30 @@ def reco_men():
         else:
             try:
                 filename = uploaded_images.save(image)
+                filename = app.instance_path + '/' + filename
             except UploadNotAllowed:
                 return "Upload was not allowed"
             else:
-                print(filename)
-                return dump_response(0, '#ffffff', '#ffffff', 2.0, 0, {}, {})
-    return "Hoge"
+                result, code = analysis(filename)
+                if code == P_SUCCESS:
+                    hair_color = '#%02X%02X%02X' % (result['hairR'],
+                                                    result['hairG'],
+                                                    result['hairB'])
+                    skin_color = '#%02X%02X%02X' % (result['skinR'],
+                                                    result['skinG'],
+                                                    result['skinB'])
+                    return dump_response(int(result['cluster']),
+                                         skin_color, hair_color,
+                                         float(result['ratio']),
+                                         int(result['contour']),
+                                         {}, {})
+                elif code == P_NOTFOUND:
+                    return json.dumps({'error': 'File not found'})
+                elif code == P_UNDETECTED:
+                    result['error'] = 'Undetected'
+                    return json.dumps(result)
+    return "Unexpected"
 
 if __name__ == '__main__':
+    prediction_init()
     app.run(debug=True)
