@@ -3,6 +3,7 @@
 from flask import (Flask, request)
 from flask_uploads import (UploadSet, configure_uploads, IMAGES, UploadNotAllowed)
 from predict import (prediction_init, analysis, P_SUCCESS, P_NOTFOUND, P_UNDETECTED)
+from cluster import get_cluster_images
 import json
 import os
 import datetime
@@ -12,9 +13,10 @@ app = Flask(__name__)
 uploaded_images = UploadSet('images', default_dest=lambda app: app.instance_path)
 configure_uploads(app, uploaded_images)
 
-def dump_response(cluster, skin_color, hair_color, ratio, contour,
-                  colors, clothes):
+def dump_response(cluster, sample_images, skin_color, hair_color, ratio,
+                  contour, colors, clothes):
     return json.dumps({'cluster': cluster,
+                       'sample_images': sample_images,
                        'skin_color': skin_color,
                        'hair_color': hair_color,
                        'ratio': ratio,
@@ -43,7 +45,9 @@ def reco_men():
                     skin_color = '#%02X%02X%02X' % (result['skinR'],
                                                     result['skinG'],
                                                     result['skinB'])
+                    sample_images = get_cluster_images(result['cluster'])
                     return dump_response(int(result['cluster']),
+                                         sample_images,
                                          skin_color, hair_color,
                                          float(result['ratio']),
                                          int(result['contour']),
