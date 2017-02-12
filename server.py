@@ -35,7 +35,7 @@ def upload():
 @app.route('/reco/men', methods=['POST'])
 def reco_men():
     if request.method == 'POST':
-        image = request.files.get('image');
+        image = request.files.get('camera');
         if not image:
             return "Please upload image"
         else:
