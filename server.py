@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import (Flask, request, render_template)
+from flask import (Flask, request, render_template, session)
 from flask_uploads import (UploadSet, configure_uploads, IMAGES, UploadNotAllowed)
 from predict import (prediction_init, analysis, P_SUCCESS, P_NOTFOUND, P_UNDETECTED)
 from cluster import get_cluster_images
@@ -24,6 +24,10 @@ def dump_response(cluster, sample_images, skin_color, hair_color, ratio,
                        'colors': colors,
                        'clothes': clothes})
 
+@app.before_request
+def make_session_permanent():
+    session.modified = True
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -35,15 +39,15 @@ def upload():
 @app.route('/reco/men', methods=['POST'])
 def reco_men():
     if request.method == 'POST':
-        image = request.files.get('camera');
-        if not image:
-            return "Please upload image"
+        if 'camera' not in request.files:
+            return "画像をアップロードしてください"
         else:
+            image = request.files['camera']
             try:
                 filename = uploaded_images.save(image)
                 filename = app.instance_path + '/' + filename
             except UploadNotAllowed:
-                return "Upload was not allowed"
+                return "アップロードが許可されていません"
             else:
                 result, code = analysis(filename)
                 if code == P_SUCCESS:
@@ -69,13 +73,13 @@ def reco_men():
 #                                         {}, {})
                 elif code == P_NOTFOUND:
 #                    return json.dumps({'error': 'File not found'})
-                    return render_template('error.html', error="File not found")
+                    return render_template('error.html', error="ファイルが見つかりません")
                 elif code == P_UNDETECTED:
 #                    result['error'] = 'Undetected'
 #                    return json.dumps(result)
-                    return render_template('error.html', error="Undetected your face or bust")
+                    return render_template('error.html', error="顔か上半身が検出されませんでした")
     return "Unexpected"
 
 if __name__ == '__main__':
     prediction_init()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=80)
